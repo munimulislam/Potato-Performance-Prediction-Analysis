@@ -1,0 +1,14 @@
+paths:
+  incoming: data/incoming
+  archive: data/archive
+  gold: data/gold_versions
+  rejects: data/rejects
+  artifacts_runs: artifacts/runs
+  logs: logs
+
+business_key:
+  columns: [year, experiment_name, name1] #Ordered
+
+excel:
+  extensions: [.xlsx, .xlsm, .xls]
+  default_sheet: 0
