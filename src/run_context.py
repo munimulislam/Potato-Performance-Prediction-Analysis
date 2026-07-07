@@ -7,7 +7,7 @@
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from .config import PipelineConfig
+from .config import PathConfig, PipelineConfig
 import yaml
 import json
 
@@ -24,10 +24,18 @@ def create_run_id() -> str:
     return datetime.now(timezone.utc).strftime("%d%m%Y_%H%M%S")
 
 
-def create_run_artifact_dir(config: PipelineConfig, run_id: str) -> Path:
-    run_dir = Path(config.paths.artifacts_runs) / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    return run_dir
+def create_pipeline_dirs(paths_cfg: PathConfig):
+    paths = [
+        paths_cfg.incoming,
+        paths_cfg.archive,
+        paths_cfg.gold,
+        paths_cfg.rejects,
+        paths_cfg.artifacts_runs,
+        paths_cfg.logs,
+    ]
+
+    for d in paths:
+        Path(d).mkdir(parents=True, exist_ok=True)
 
 
 def publish_run_meta(context: RunContext, meta_dir: str):
@@ -41,8 +49,10 @@ def publish_run_meta(context: RunContext, meta_dir: str):
 
 
 def init_run(config: PipelineConfig) -> RunContext:
+    create_pipeline_dirs(config.paths)
     run_id = create_run_id()
-    run_dir = create_run_artifact_dir(config, run_id)
+    run_dir = Path(config.paths.artifacts_runs) / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
 
     context = RunContext(
         run_id=run_id,

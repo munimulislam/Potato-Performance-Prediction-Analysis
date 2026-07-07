@@ -87,12 +87,6 @@ def ingest_incoming(
         except Exception as e:
             results.append(IngestResult(f.name, str(sheet_name), 0, "Error", str(e)))
 
-    for i, df in enumerate(df_list):
-        if not df.index.is_unique:
-            print(f"DataFrame at index {i} has duplicate ROW indices.")
-        if not df.columns.is_unique:
-            print(f"DataFrame at index {i} has duplicate COLUMN names.")
-
     dataframes = (
         pd.concat(df_list, ignore_index=True, sort=False) if df_list else pd.DataFrame()
     )

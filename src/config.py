@@ -70,18 +70,6 @@ def load_path_config(root: dict) -> PathConfig:
         logs=str(paths_dict["logs"]),
     )
 
-    paths = [
-        paths_cfg.incoming,
-        paths_cfg.archive,
-        paths_cfg.gold,
-        paths_cfg.rejects,
-        paths_cfg.artifacts_runs,
-        paths_cfg.logs,
-    ]
-
-    for d in paths:
-        Path(d).mkdir(parents=True, exist_ok=True)
-
     return paths_cfg
 
 
