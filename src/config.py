@@ -1,3 +1,8 @@
+"""
+@Author - MdMunimul.Islam@:teagasc.ie
+@Create Date - 06/07/2026
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 import yaml
@@ -10,7 +15,7 @@ class PathConfig:
     archive: str
     gold: str
     rejects: str
-    artifects_runs: str
+    artifacts_runs: str
     logs: str
 
 
@@ -61,11 +66,20 @@ def load_path_config(root: dict) -> PathConfig:
         archive=str(paths_dict["archive"]),
         gold=str(paths_dict["gold"]),
         rejects=str(paths_dict["rejects"]),
-        artifects_runs=str(paths_dict["artifects_runs"]),
+        artifacts_runs=str(paths_dict["artifacts_runs"]),
         logs=str(paths_dict["logs"]),
     )
 
-    for d in paths_dict.values():
+    paths = [
+        paths_cfg.incoming,
+        paths_cfg.archive,
+        paths_cfg.gold,
+        paths_cfg.rejects,
+        paths_cfg.artifacts_runs,
+        paths_cfg.logs,
+    ]
+
+    for d in paths:
         Path(d).mkdir(parents=True, exist_ok=True)
 
     return paths_cfg
