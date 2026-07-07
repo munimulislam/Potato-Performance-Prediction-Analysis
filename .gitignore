@@ -9,3 +9,6 @@ data/**
 !data/**/
 !data/**/.gitkeep
 
+artifacts/**
+!artifacts/**/
+!artifacts/**/.gitkeep
