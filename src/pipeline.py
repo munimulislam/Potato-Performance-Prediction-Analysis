@@ -12,9 +12,12 @@ from .ingest import ingest_incoming
 def main():
     config = load_config()
     run_context = init_run(config)
-    df = ingest_incoming(
+    valid, reject = ingest_incoming(
         run_context.run_id, config.paths.incoming, config.excel.extensions
     )
+
+    valid.to_csv("data/valid.csv")
+    reject.to_csv("data/reject.csv")
 
 
 if __name__ == "__main__":

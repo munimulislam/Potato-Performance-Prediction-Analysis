@@ -7,6 +7,8 @@
 import pandas as pd
 import re
 
+from .schema import ALWAYS_DROP_COLS
+
 COLUMN_ALIASES: dict[str, str] = {}
 
 
@@ -27,7 +29,13 @@ def clean_column_name(name: str) -> str:
 
 def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+
     clean_col_names = [clean_column_name(c) for c in df.columns]
-    clean_col_names = [COLUMN_ALIASES.get(c, c) for c in clean_col_names]
-    df.columns = clean_col_names
+    final_col_names = [COLUMN_ALIASES.get(c, c) for c in clean_col_names]
+    df.columns = final_col_names
+
+    keep_cols = [c for c in df.columns if c not in ALWAYS_DROP_COLS]
+
+    df = df[keep_cols]
+
     return df

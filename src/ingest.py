@@ -8,15 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import pandas as pd
 from datetime import datetime, timezone
-from collections import Counter
+from .sheet_validator import SheetValidationResult, SheetValidator
 from .standardise import standardise_columns
-
-
-class DuplicateColumnsError(Exception):
-    def __init__(self, duplicates: list[str]):
-        self.duplicates = duplicates
-        msg = f"Duplicate column names: {self.duplicates}"
-        super().__init__(msg)
 
 
 @dataclass
@@ -28,10 +21,20 @@ class IngestResult:
     error_message: str | None
 
 
-def add_provenance(df: pd.DataFrame, provenance_dict: dict) -> pd.DataFrame:
+class SheetUnprocessable(Exception):
+    pass
+
+
+def add_provenance(
+    df: pd.DataFrame, run_id: str, filename: str, sheet_name: str
+) -> pd.DataFrame:
     out = df.copy()
-    for k, v in provenance_dict.items():
-        out[k] = v
+    out["run_id"] = run_id
+    out["ingested_at_utc"] = datetime.now(timezone.utc).isoformat()
+    out["source_file_name"] = filename
+    out["source_sheet"] = sheet_name
+    out["source_row_number"] = df.index.astype(int) + 2
+
     return out
 
 
@@ -51,44 +54,61 @@ def sheet_to_dataframe(file_path: str, sheet_name: int = 0):
     return df
 
 
-def check_duplicate_columns(df: pd.DataFrame):
-    counts = Counter(df.columns)
-    duplicates = sorted([c for c, n in counts.items() if n > 1])
-    return duplicates
+def split_valid_reject(
+    df: pd.DataFrame, result: SheetValidationResult
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if result.ok:
+        return df.copy(), pd.DataFrame(columns=list(df.columns) + ["error_message"])
+
+    if result.has_schema_errors:
+        raise SheetUnprocessable("|".join(result.schema_errors))
+
+    is_bad = df.index.isin(result.error_row_indices)
+    valid_df = df[~is_bad].copy()
+    reject_df = df[is_bad].copy()
+    reject_df["error_message"] = reject_df.index.map(result.row_errors)
+    return valid_df, reject_df
 
 
 def ingest_incoming(
     run_id: str, source_dir: str, file_extensions: list[str], sheet_name: int = 0
-):
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     files = discover_excel_files(source_dir, file_extensions)
-    df_list: list[pd.DataFrame] = []
-    results: list[IngestResult] = []
+    valid_df_list = []
+    reject_df_list = []
+    ingestion_results: list[IngestResult] = []
 
     for f in files:
         try:
+            print(str(f))
             df = sheet_to_dataframe(str(f), sheet_name)
             df = standardise_columns(df)
+            df = add_provenance(df, run_id, f.name, str(sheet_name))
 
-            duplicates = check_duplicate_columns(df)
-            if duplicates:
-                raise DuplicateColumnsError(duplicates)
+            validation_result = SheetValidator().validate(df)
+            valid_df, reject_df = split_valid_reject(df, validation_result)
 
-            provenance = {
-                "run_id": run_id,
-                "ingested_at_utc": datetime.now(timezone.utc).isoformat(),
-                "source_file_name": f.name,
-                "source_sheet": sheet_name,
-                "source_row_number": df.index.astype(int) + 2,
-            }
+            valid_df_list.append(valid_df)
+            reject_df_list.append(reject_df)
 
-            df = add_provenance(df, provenance)
-            df_list.append(df)
-            results.append(IngestResult(f.name, str(sheet_name), len(df), "OK", None))
+            ingestion_results.append(
+                IngestResult(f.name, str(sheet_name), len(df), "OK", None)
+            )
         except Exception as e:
-            results.append(IngestResult(f.name, str(sheet_name), 0, "Error", str(e)))
+            print(e)
+            ingestion_results.append(
+                IngestResult(f.name, str(sheet_name), 0, "Error", str(e))
+            )
 
-    dataframes = (
-        pd.concat(df_list, ignore_index=True, sort=False) if df_list else pd.DataFrame()
+    valid_dataframe = (
+        pd.concat(valid_df_list, ignore_index=True, sort=False)
+        if valid_df_list
+        else pd.DataFrame()
+    )
+    reject_dataframe = (
+        pd.concat(reject_df_list, ignore_index=True, sort=False)
+        if reject_df_list
+        else pd.DataFrame()
     )
 
-    return dataframes
+    return valid_dataframe, reject_dataframe

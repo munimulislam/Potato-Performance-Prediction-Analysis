@@ -12,3 +12,5 @@ business_key:
 excel:
   extensions: [.xlsx, .xlsm, .xls]
   default_sheet: 0
+
+always_drop_cols: [barcode_39, block, entry, female,  images, for_yield, hunterl,huntera, hunterb]
