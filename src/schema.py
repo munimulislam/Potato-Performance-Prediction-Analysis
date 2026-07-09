@@ -45,7 +45,7 @@ ALWAYS_DROP_COLS = [
 ]
 
 PROVENANCE_COLS = [
-    "row_id",
+    "run_id",
     "ingested_at_utc",
     "source_file_name",
     "source_sheet",
@@ -336,7 +336,7 @@ def build_sheet_schema():
 def get_unknown_cols(df: pd.DataFrame):
     return list(
         set(df.columns)
-        - set(
-            build_sheet_schema().columns.keys() - set(PROVENANCE_COLS) - set(ERROR_COLS)
-        )
+        - build_sheet_schema().columns.keys()
+        - set(PROVENANCE_COLS)
+        - set(ERROR_COLS)
     )

@@ -12,3 +12,7 @@ data/**
 artifacts/**
 !artifacts/**/
 !artifacts/**/.gitkeep
+
+
+logs/*
+!logs/.gitkeep
