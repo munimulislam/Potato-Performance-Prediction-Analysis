@@ -6,6 +6,7 @@
 """
 
 import pandera.pandas as pa
+import pandas as pd
 
 ALWAYS_DROP_COLS = [
     "archived",
@@ -42,6 +43,16 @@ ALWAYS_DROP_COLS = [
     "tyduk",
     "yearfact",
 ]
+
+PROVENANCE_COLS = [
+    "row_id",
+    "ingested_at_utc",
+    "source_file_name",
+    "source_sheet",
+    "source_row_number",
+]
+
+ERROR_COLS = ["error_message"]
 
 EMPTY_STRING_CHECK = pa.Check(
     lambda s: len(s) > 0,
@@ -320,3 +331,12 @@ def build_sheet_schema():
     )
 
     return schema
+
+
+def get_unknown_cols(df: pd.DataFrame):
+    return list(
+        set(df.columns)
+        - set(
+            build_sheet_schema().columns.keys() - set(PROVENANCE_COLS) - set(ERROR_COLS)
+        )
+    )

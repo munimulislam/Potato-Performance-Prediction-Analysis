@@ -6,10 +6,17 @@
 
 import pandas as pd
 import re
-
+from dataclasses import dataclass
 from .schema import ALWAYS_DROP_COLS
 
 COLUMN_ALIASES: dict[str, str] = {}
+
+
+@dataclass
+class StandardisationResult:
+    dataframe: pd.DataFrame
+    column_rename_map: dict[str, str]
+    dropped_columns: list[str]
 
 
 def clean_column_name(name: str) -> str:
@@ -27,15 +34,25 @@ def clean_column_name(name: str) -> str:
     return c
 
 
-def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
+def standardise_columns(df: pd.DataFrame) -> StandardisationResult:
     df = df.copy()
 
+    original_col_names = list(df.columns)
     clean_col_names = [clean_column_name(c) for c in df.columns]
     final_col_names = [COLUMN_ALIASES.get(c, c) for c in clean_col_names]
     df.columns = final_col_names
 
-    keep_cols = [c for c in df.columns if c not in ALWAYS_DROP_COLS]
+    rename_map = {
+        str(original): str(final)
+        for original, final in zip(original_col_names, final_col_names)
+        if str(original) != str(final)
+    }
+
+    drop_cols = ALWAYS_DROP_COLS
+    keep_cols = [c for c in df.columns if c not in drop_cols]
 
     df = df[keep_cols]
 
-    return df
+    result = StandardisationResult(df, rename_map, drop_cols)
+
+    return result

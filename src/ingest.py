@@ -8,17 +8,28 @@ from dataclasses import dataclass
 from pathlib import Path
 import pandas as pd
 from datetime import datetime, timezone
+
+from .schema import get_unknown_cols
 from .sheet_validator import SheetValidationResult, SheetValidator
 from .standardise import standardise_columns
 
 
 @dataclass
-class IngestResult:
+class IngestSummary:
     source_file_name: str
     source_sheet: str
     n_rows: int
+    n_rows_rejected: int
+    n_rows_accepted: int
     status: str
-    error_message: str | None
+    sheet_error: str | None
+    n_dropped_cols: int
+    n_empty_cols: int
+    n_unknown_cols: int
+    dropped_cols: list[str] | None
+    unknown_cols: list[str] | None
+    empty_cols: list[str] | None
+    rename_map: dict[str, str] | None
 
 
 class SheetUnprocessable(Exception):
@@ -72,18 +83,23 @@ def split_valid_reject(
 
 def ingest_incoming(
     run_id: str, source_dir: str, file_extensions: list[str], sheet_name: int = 0
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, list[IngestSummary]]:
     files = discover_excel_files(source_dir, file_extensions)
     valid_df_list = []
     reject_df_list = []
-    ingestion_results: list[IngestResult] = []
+    ingestion_results: list[IngestSummary] = []
 
     for f in files:
         try:
             print(str(f))
             df = sheet_to_dataframe(str(f), sheet_name)
-            df = standardise_columns(df)
+            std_result = standardise_columns(df)
+            df = std_result.dataframe
             df = add_provenance(df, run_id, f.name, str(sheet_name))
+
+            empty_cols = [c for c in df.columns if df[c].isna().all()]
+            dropped_cols = std_result.dropped_columns
+            unknown_cols = get_unknown_cols(df)
 
             validation_result = SheetValidator().validate(df)
             valid_df, reject_df = split_valid_reject(df, validation_result)
@@ -92,12 +108,41 @@ def ingest_incoming(
             reject_df_list.append(reject_df)
 
             ingestion_results.append(
-                IngestResult(f.name, str(sheet_name), len(df), "OK", None)
+                IngestSummary(
+                    source_file_name=f.name,
+                    source_sheet=str(sheet_name),
+                    n_rows=len(df),
+                    n_rows_rejected=len(reject_df),
+                    n_rows_accepted=len(valid_df),
+                    status="OK",
+                    sheet_error=None,
+                    n_dropped_cols=len(dropped_cols),
+                    n_empty_cols=len(empty_cols),
+                    n_unknown_cols=len(unknown_cols),
+                    dropped_cols=dropped_cols,
+                    unknown_cols=unknown_cols,
+                    rename_map=std_result.column_rename_map,
+                    empty_cols=empty_cols,
+                )
             )
         except Exception as e:
-            print(e)
             ingestion_results.append(
-                IngestResult(f.name, str(sheet_name), 0, "Error", str(e))
+                IngestSummary(
+                    source_file_name=f.name,
+                    source_sheet=str(sheet_name),
+                    n_rows=0,
+                    n_rows_rejected=0,
+                    n_rows_accepted=0,
+                    status="SHEET_ERROR",
+                    sheet_error=str(e),
+                    n_dropped_cols=0,
+                    n_empty_cols=0,
+                    n_unknown_cols=0,
+                    dropped_cols=None,
+                    unknown_cols=None,
+                    rename_map=None,
+                    empty_cols=None,
+                )
             )
 
     valid_dataframe = (
@@ -111,4 +156,4 @@ def ingest_incoming(
         else pd.DataFrame()
     )
 
-    return valid_dataframe, reject_dataframe
+    return valid_dataframe, reject_dataframe, ingestion_results
