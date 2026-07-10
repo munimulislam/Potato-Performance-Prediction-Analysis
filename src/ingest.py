@@ -9,13 +9,22 @@ from pathlib import Path
 import pandas as pd
 from datetime import datetime, timezone
 
-from .schema import get_unknown_cols
+from .schema import ERROR_COLUMN_NAME, get_unknown_cols
 from .sheet_validator import SheetValidationResult, SheetValidator
 from .standardise import standardise_columns
 
 
 @dataclass
-class IngestSummary:
+class IngestBatchResult:
+    n_sheet_processed: int
+    n_sheet_with_error: int
+    sheet_results: list[SheetIngestResult]
+    valid_df: pd.DataFrame
+    reject_df: pd.DataFrame
+
+
+@dataclass
+class SheetIngestResult:
     source_file_name: str
     source_sheet: str
     n_rows: int
@@ -30,6 +39,8 @@ class IngestSummary:
     unknown_cols: list[str] | None
     empty_cols: list[str] | None
     rename_map: dict[str, str] | None
+    valid_df: pd.DataFrame | None
+    reject_df: pd.DataFrame | None
 
 
 class SheetUnprocessable(Exception):
@@ -65,11 +76,11 @@ def sheet_to_dataframe(file_path: str, sheet_name: int = 0):
     return df
 
 
-def split_valid_reject(
+def split_valid_reject_dataframe(
     df: pd.DataFrame, result: SheetValidationResult
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     if result.ok:
-        return df.copy(), pd.DataFrame(columns=list(df.columns) + ["error_message"])
+        return df.copy(), pd.DataFrame(columns=list(df.columns) + [ERROR_COLUMN_NAME])
 
     if result.has_schema_errors:
         raise SheetUnprocessable("|".join(result.schema_errors))
@@ -81,69 +92,80 @@ def split_valid_reject(
     return valid_df, reject_df
 
 
-def ingest_incoming(
+def ingest_sheet(file_path: str, run_id: str, sheet_name: int = 0):
+    try:
+        df = sheet_to_dataframe(file_path, sheet_name)
+        std_result = standardise_columns(df)
+        df = std_result.dataframe
+        df = add_provenance(df, run_id, Path(file_path).name, str(sheet_name))
+
+        empty_cols = df.columns[df.isna().all()].tolist()
+        dropped_cols = std_result.dropped_columns
+        unknown_cols = get_unknown_cols(df)
+
+        validation_result = SheetValidator().validate(df)
+        valid_df, reject_df = split_valid_reject_dataframe(df, validation_result)
+
+        return SheetIngestResult(
+            source_file_name=Path(file_path).name,
+            source_sheet=str(sheet_name),
+            n_rows=len(df),
+            n_rows_rejected=len(reject_df),
+            n_rows_accepted=len(valid_df),
+            status="OK",
+            sheet_error=None,
+            n_dropped_cols=len(dropped_cols),
+            n_empty_cols=len(empty_cols),
+            n_unknown_cols=len(unknown_cols),
+            dropped_cols=dropped_cols,
+            unknown_cols=unknown_cols,
+            rename_map=std_result.column_rename_map,
+            empty_cols=empty_cols,
+            valid_df=valid_df,
+            reject_df=reject_df,
+        )
+
+    except SheetUnprocessable as e:
+        return SheetIngestResult(
+            source_file_name=Path(file_path).name,
+            source_sheet=str(sheet_name),
+            n_rows=0,
+            n_rows_rejected=0,
+            n_rows_accepted=0,
+            status="SHEET_ERROR",
+            sheet_error=str(e),
+            n_dropped_cols=0,
+            n_empty_cols=0,
+            n_unknown_cols=0,
+            dropped_cols=None,
+            unknown_cols=None,
+            rename_map=None,
+            empty_cols=None,
+            valid_df=None,
+            reject_df=None,
+        )
+
+
+def ingest_batch(
     run_id: str, source_dir: str, file_extensions: list[str], sheet_name: int = 0
-) -> tuple[pd.DataFrame, pd.DataFrame, list[IngestSummary]]:
+) -> IngestBatchResult:
     files = discover_excel_files(source_dir, file_extensions)
-    valid_df_list = []
-    reject_df_list = []
-    ingestion_results: list[IngestSummary] = []
+    valid_df_list: list[pd.DataFrame] = []
+    reject_df_list: list[pd.DataFrame] = []
+    sheet_result_list: list[SheetIngestResult] = []
 
-    for f in files:
-        try:
-            print(str(f))
-            df = sheet_to_dataframe(str(f), sheet_name)
-            std_result = standardise_columns(df)
-            df = std_result.dataframe
-            df = add_provenance(df, run_id, f.name, str(sheet_name))
+    for file in files:
+        sheet_result = ingest_sheet(str(file), run_id)
+        valid = sheet_result.valid_df
+        reject = sheet_result.reject_df
 
-            empty_cols = [c for c in df.columns if df[c].isna().all()]
-            dropped_cols = std_result.dropped_columns
-            unknown_cols = get_unknown_cols(df)
+        if valid is not None:
+            valid_df_list.append(valid)
 
-            validation_result = SheetValidator().validate(df)
-            valid_df, reject_df = split_valid_reject(df, validation_result)
+        if reject is not None:
+            reject_df_list.append(reject)
 
-            valid_df_list.append(valid_df)
-            reject_df_list.append(reject_df)
-
-            ingestion_results.append(
-                IngestSummary(
-                    source_file_name=f.name,
-                    source_sheet=str(sheet_name),
-                    n_rows=len(df),
-                    n_rows_rejected=len(reject_df),
-                    n_rows_accepted=len(valid_df),
-                    status="OK",
-                    sheet_error=None,
-                    n_dropped_cols=len(dropped_cols),
-                    n_empty_cols=len(empty_cols),
-                    n_unknown_cols=len(unknown_cols),
-                    dropped_cols=dropped_cols,
-                    unknown_cols=unknown_cols,
-                    rename_map=std_result.column_rename_map,
-                    empty_cols=empty_cols,
-                )
-            )
-        except Exception as e:
-            ingestion_results.append(
-                IngestSummary(
-                    source_file_name=f.name,
-                    source_sheet=str(sheet_name),
-                    n_rows=0,
-                    n_rows_rejected=0,
-                    n_rows_accepted=0,
-                    status="SHEET_ERROR",
-                    sheet_error=str(e),
-                    n_dropped_cols=0,
-                    n_empty_cols=0,
-                    n_unknown_cols=0,
-                    dropped_cols=None,
-                    unknown_cols=None,
-                    rename_map=None,
-                    empty_cols=None,
-                )
-            )
+        sheet_result_list.append(sheet_result)
 
     valid_dataframe = (
         pd.concat(valid_df_list, ignore_index=True, sort=False)
@@ -156,4 +178,14 @@ def ingest_incoming(
         else pd.DataFrame()
     )
 
-    return valid_dataframe, reject_dataframe, ingestion_results
+    result = IngestBatchResult(
+        n_sheet_processed=len(sheet_result_list),
+        n_sheet_with_error=len(
+            [r for r in sheet_result_list if r.sheet_error is not None]
+        ),
+        valid_df=valid_dataframe,
+        reject_df=reject_dataframe,
+        sheet_results=sheet_result_list,
+    )
+
+    return result

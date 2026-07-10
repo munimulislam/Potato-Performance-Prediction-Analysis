@@ -52,7 +52,7 @@ PROVENANCE_COLS = [
     "source_row_number",
 ]
 
-ERROR_COLS = ["error_message"]
+ERROR_COLUMN_NAME = ["error_message"]
 
 EMPTY_STRING_CHECK = pa.Check(
     lambda s: len(s) > 0,
@@ -338,5 +338,5 @@ def get_unknown_cols(df: pd.DataFrame):
         set(df.columns)
         - build_sheet_schema().columns.keys()
         - set(PROVENANCE_COLS)
-        - set(ERROR_COLS)
+        - set(ERROR_COLUMN_NAME)
     )
