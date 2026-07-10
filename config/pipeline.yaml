@@ -7,7 +7,7 @@ paths:
   logs: logs
 
 business_key:
-  columns: [year, experiment_name, name1] #Ordered
+  columns: [year, experiment_name, name1, plot]
 
 excel:
   extensions: [.xlsx, .xlsm, .xls]
