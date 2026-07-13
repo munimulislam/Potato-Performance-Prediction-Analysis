@@ -40,13 +40,12 @@ def get_ingest_summary(context: RunContext, result: IngestBatchResult) -> dict:
 
 def append_duplicate_rows_to_reject(
     duplicates_df: pd.DataFrame, reject_df: pd.DataFrame
-):
-    if not duplicates_df.empty:
-        rejects = (
-            pd.concat([duplicates_df, reject_df], ignore_index=True, sort=False)
-            if not reject_df.empty
-            else duplicates_df
-        )
+) -> pd.DataFrame:
+    if duplicates_df.empty:
+        return reject_df
+    if reject_df.empty:
+        return duplicates_df
+    return pd.concat([duplicates_df, reject_df], ignore_index=True, sort=False)
 
 
 def main():
@@ -74,15 +73,15 @@ def main():
     if batch_ingest_result.valid_df.empty:
         logger.warning("PIPELINE | no valid rows")
     else:
-        add_business_key_column(
+        batch_ingest_result.valid_df = add_business_key_column(
             batch_ingest_result.valid_df, config.business_key.columns
         )
-        add_row_hash_column(batch_ingest_result.valid_df)
+        batch_ingest_result.valid_df = add_row_hash_column(batch_ingest_result.valid_df)
         valid_df, duplicates_df = split_duplicate_key_rows(batch_ingest_result.valid_df)
         batch_ingest_result.valid_df = valid_df
 
         if not duplicates_df.empty:
-            append_duplicate_rows_to_reject(
+            batch_ingest_result.reject_df = append_duplicate_rows_to_reject(
                 duplicates_df, batch_ingest_result.reject_df
             )
 

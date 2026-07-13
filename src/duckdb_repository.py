@@ -140,7 +140,7 @@ class DuckDBTrialsRepository:
         con.execute(CREATE_CURRENT_TRIAL_DATA_VIEW)
         con.execute(CREATE_SHEET_ERROR_TABLE)
         con.execute(_CREATE_REJECT_ROWS_TABLE)
-        con.execute(CREATE_RAW_SCHEMA)
+        con.execute(CREATE_RUN_TABLE)
 
         logger.info("STORE | schema initialised")
 
