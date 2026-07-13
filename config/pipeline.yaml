@@ -5,6 +5,8 @@ paths:
   rejects: data/rejects
   artifacts_runs: artifacts/runs
   logs: logs
+  duckdb: duckdb/trials.duckdb
+
 
 business_key:
   columns: [year, experiment_name, name1, plot]

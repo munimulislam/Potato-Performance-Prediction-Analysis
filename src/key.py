@@ -7,7 +7,7 @@
 import logging
 import hashlib
 import pandas as pd
-from schema import ERROR_COLUMN_NAME
+from schema import ERROR_COLUMN_NAME, get_schema_columns
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def add_business_key_column(df: pd.DataFrame, key_columns: list[str]):
 
 
 def add_row_hash_column(df: pd.DataFrame, exclude_columns: list[str] = []):
-    cols = sorted([c for c in df.columns if c not in exclude_columns])
+    cols = sorted([c for c in get_schema_columns() if c not in exclude_columns])
 
     df["row_hash"] = df.apply(
         lambda r: _digest("|".join([_normalize_value(r[c]) for c in cols])),

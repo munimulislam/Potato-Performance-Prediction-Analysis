@@ -16,3 +16,13 @@ artifacts/**
 
 logs/*
 !logs/.gitkeep
+
+# DuckDB database and write-ahead log files
+*.db
+*.duckdb
+*.ddb
+*.wal
+
+# DuckDB temporary processing files
+*.tmp
+*.block

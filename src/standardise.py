@@ -22,14 +22,19 @@ class StandardisationResult:
 def clean_column_name(name: str) -> str:
     c = str(name).strip().lower()
     c = re.sub(r"\s+", " ", c)
-    c = (
-        c.replace("lenght", "length")
-        .replace(" (", "(")
-        .replace(" )", ")")
-        .replace(" %", "%")
-        .replace(" #", "#")
-        .replace(" ", "_")
-    )
+
+    c = c.replace(">=", "gte")
+    c = c.replace("<=", "lte")
+    c = c.replace(">", "gt")
+    c = c.replace("<", "lt")
+    c = c.replace("%", "parcent")
+    c = c.replace("#", "hash")
+
+    c = re.sub(r"[^a-z0-9]+", "_", c)
+    c = re.sub(r"_+", "_", c).strip("_")
+
+    if not c or not c[0].isalpha():
+        c = f"col_{c}" if c else "col"
 
     return c
 

@@ -5,6 +5,8 @@
 @Description - Description of the file.
 """
 
+import hashlib
+
 import pandera.pandas as pa
 import pandas as pd
 
@@ -71,7 +73,7 @@ NUMBER_NON_NEGATIVE_CHECK = pa.Check(
 )
 
 
-def build_sheet_schema():
+def build_sheet_schema() -> pa.DataFrameSchema:
     schema = pa.DataFrameSchema(
         name="trial_data_sheet",
         title="trial_data_sheet",
@@ -340,3 +342,12 @@ def get_unknown_cols(df: pd.DataFrame):
         - set(PROVENANCE_COLS)
         - set(ERROR_COLUMN_NAME)
     )
+
+
+def get_schema_columns() -> list[str]:
+    return sorted(list(build_sheet_schema().columns.keys()))
+
+
+def get_schema_version() -> str:
+    cols = get_schema_columns()
+    return hashlib.sha256("|".join(cols).encode("utf-8")).hexdigest()

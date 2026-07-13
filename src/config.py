@@ -17,6 +17,7 @@ class PathConfig:
     rejects: str
     artifacts_runs: str
     logs: str
+    duckdb: str
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,7 @@ def load_path_config(root: dict) -> PathConfig:
         rejects=str(paths_dict["rejects"]),
         artifacts_runs=str(paths_dict["artifacts_runs"]),
         logs=str(paths_dict["logs"]),
+        duckdb=str(paths_dict["duckdb"]),
     )
 
     return paths_cfg
