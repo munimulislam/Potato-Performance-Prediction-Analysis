@@ -21,11 +21,6 @@ class PathConfig:
 
 
 @dataclass(frozen=True)
-class BusinessKeyConfig:
-    columns: list[str]  # ordered
-
-
-@dataclass(frozen=True)
 class ExcelConfig:
     extensions: list[str]
     default_sheet: int | str = 0
@@ -34,7 +29,6 @@ class ExcelConfig:
 @dataclass(frozen=True)
 class PipelineConfig:
     paths: PathConfig
-    business_key: BusinessKeyConfig
     excel: ExcelConfig
 
 
@@ -43,20 +37,6 @@ def _require_dict(d: Any, name: str) -> dict:
         raise ValueError(f"Expected '{name}' to be a dict in config")
 
     return d
-
-
-def load_business_key_config(root: dict) -> BusinessKeyConfig:
-    business_key_dict = _require_dict(root.get("business_key"), "business_key")
-    business_key_cols = business_key_dict.get("columns")
-
-    if not isinstance(business_key_cols, list) or not all(
-        isinstance(x, str) for x in business_key_cols
-    ):
-        raise ValueError("business_key columns must be a list of strings")
-
-    business_key_cfg = BusinessKeyConfig(columns=business_key_dict["columns"])
-
-    return business_key_cfg
 
 
 def load_path_config(root: dict) -> PathConfig:
@@ -99,7 +79,6 @@ def load_config(config_path: str = "config/pipeline.yaml") -> PipelineConfig:
 
     cfg = PipelineConfig(
         paths=load_path_config(root_dict),
-        business_key=load_business_key_config(root_dict),
         excel=load_excel_config(root_dict),
     )
 

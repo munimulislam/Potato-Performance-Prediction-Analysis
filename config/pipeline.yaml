@@ -5,7 +5,7 @@ paths:
   rejects: data/rejects
   artifacts_runs: artifacts/runs
   logs: logs
-  duckdb: duckdb/trials.duckdb
+  duckdb: data/trials
 
 
 business_key:

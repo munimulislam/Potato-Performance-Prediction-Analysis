@@ -8,9 +8,15 @@ dependencies = [
     "numpy>=1.26",
     "pyarrow>=24",
     "openpyxl>=3.1",
-    "pyyaml>=6.0",
-    "pandera>=0.32",
-    "duckdb==1.5.4"
+    "duckdb==1.5.4",
+    "pytest==9.1.1",
+    "dlt==1.29.0",
+    "pydantic==2.13.4",
+    "streamlit==1.59.2",
+    "dlt[hub]>=1.0.0",
+    "marimo",
+    "pyarrow",
+    "ibis-framework"
 ]
 
 [project.optional-dependencies]
@@ -28,3 +34,10 @@ select = ["E", "F", "I"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[normalize.parquet_normalizer]
+add_dlt_load_id = true
+add_dlt_id = true
+
+[sources.data_writer]
+arrow_concat_promote_options = "permissive"
