@@ -1,0 +1,41 @@
+versions: 2
+
+models: 
+  - name: int_trials_current
+    description: "Current snapshot of valid trials (SCD2 valid_to is NULL)."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - year
+            - location
+            - experiment_name
+            - name1
+            - plot
+    columns:
+      - name: year
+        data_tests: [not_null]
+      - name: name1
+        data_tests: [not_null]
+      - name: experiment_name
+        tests: [not_null]
+      - name: plot 
+        tests: [not_null]
+      - name: location 
+        tests: [not_null]
+      - name: business_key 
+        tests: [not_null]
+      - name: env_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["MED", "NE", "UNKNOWN"]
+      - name: trial_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["PROCESS", "WARE", "UNKNOWN"]
+      - name: soil_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["SAND", "CLAY", "UNKNOWN"]

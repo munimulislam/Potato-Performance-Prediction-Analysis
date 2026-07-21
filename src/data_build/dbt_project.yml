@@ -1,0 +1,30 @@
+name: teagasc_trials
+version: "1.0.0"
+config-version: 2
+
+profile: teagasc_trials
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+models:
+  teagasc_trials:
+    staging:
+      +schema: staging
+      +materialized: view 
+    intermediate:
+      +schema: intermediate
+      +materialized: view 
+    marts:
+      +schema: intermediate
+      +materialized: view 
+

@@ -1,0 +1,15 @@
+versions: 2
+
+seeds:
+  - name: location_env_type
+    description: "Mapping of location -> env_type (MED/NE)."
+    columns: 
+      - name: location
+        tests:
+          - not_null
+          - unique
+      - name: env_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["MED", "NE"]

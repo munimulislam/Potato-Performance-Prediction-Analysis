@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: trial_data
+    schema: trial_data
+    tables:
+      - name: valid
+        description: >
+          dlt loaded scd2-versioned trial rows from dlt.
+      - name: quarantine
+        description: "dlt loaded quarantine rows with errors."

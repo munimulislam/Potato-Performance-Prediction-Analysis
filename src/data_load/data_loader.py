@@ -15,6 +15,7 @@ from pydantic import (
     ValidationError,
     model_validator,
 )
+from .models.trial_model import Trial
 from .standardise import standardise_columns
 from .config import load_config
 
@@ -23,36 +24,36 @@ ALWAYS_DROP_COLS = [
     # "acb24",
     "action",
     "archived",
-    "average_length_mm_0_25",
-    "average_lenght_mm_0_28",
-    "average_length_mm_0_35",
-    "average_length_mm_gte25",
-    "average_length_mm_gte28",
-    "average_length_mm_gte35",
-    "average_length_mm_gte40",
-    "average_length_mm_gte45",
-    "average_length_mm_gte50",
-    "average_length_mm_gte55",
-    "average_length_mm_gte60",
-    "average_length_mm_gte65",
-    "average_length_mm_gte70",
-    "average_length_mm_gte75",
-    "average_length_mm_gte80",
-    "average_length_mm_25_28",
-    "average_length_mm_28_35",
-    "average_length_mm_35_40",
-    "average_length_mm_40_45",
-    "average_length_mm_45_50",
-    "average_length_mm_50_55",
-    "average_length_mm_55_60",
-    "average_length_mm_60_65",
-    "average_length_mm_65_70",
-    "average_length_mm_70_75",
-    "average_length_mm_75_80",
-    "average_lenght_mm_75_80",
-    "average_lenght_mm_gte75",
-    "average_lenght_mm_gte80",
-    "average_length_mm_total",
+    # "average_length_mm_0_25",
+    # "average_lenght_mm_0_28",
+    # "average_length_mm_0_35",
+    # "average_length_mm_gte25",
+    # "average_length_mm_gte28",
+    # "average_length_mm_gte35",
+    # "average_length_mm_gte40",
+    # "average_length_mm_gte45",
+    # "average_length_mm_gte50",
+    # "average_length_mm_gte55",
+    # "average_length_mm_gte60",
+    # "average_length_mm_gte65",
+    # "average_length_mm_gte70",
+    # "average_length_mm_gte75",
+    # "average_length_mm_gte80",
+    # "average_length_mm_25_28",
+    # "average_length_mm_28_35",
+    # "average_length_mm_35_40",
+    # "average_length_mm_40_45",
+    # "average_length_mm_45_50",
+    # "average_length_mm_50_55",
+    # "average_length_mm_55_60",
+    # "average_length_mm_60_65",
+    # "average_length_mm_65_70",
+    # "average_length_mm_70_75",
+    # "average_length_mm_75_80",
+    # "average_lenght_mm_75_80",
+    # "average_lenght_mm_gte75",
+    # "average_lenght_mm_gte80",
+    # "average_length_mm_total",
     "average_nir_value_total",
     # "audpc",
     "barcode_39",
@@ -72,8 +73,8 @@ ALWAYS_DROP_COLS = [
     "blass7",
     "blass8",
     "blass9",
-    "blightcoun",
-    "blightscal",
+    # "blightcoun",
+    # "blightscal",
     "bn",
     "cross_name",
     "check",
@@ -141,11 +142,11 @@ ALWAYS_DROP_COLS = [
     "end_plot",
     "emergno",
     "female",
-    "fcover",
-    "field_plan",
-    "ff_blight",
-    "ff_sg",
-    "folgone",
+    # "fcover",
+    # "field_plan",
+    # "ff_blight",
+    # "ff_sg",
+    # "folgone",
     "female_pedigree",
     "for_yield",
     # "flesh",
@@ -283,8 +284,8 @@ ALWAYS_DROP_COLS = [
     "tuber",
     "u45tha",
     "uk45_85tha",
-    "under25",
-    "under35",
+    # "under25",
+    # "under35",
     "under25no",
     "under45no",
     "ukmy45_85",
@@ -293,69 +294,69 @@ ALWAYS_DROP_COLS = [
     "virus_y",
     # "wet_rot",
     "waste_t_ha",
-    "weight_g_0_28",
-    "weight_g_0_25",
-    "weight_g_25_28",
-    "weight_g_28_35",
-    "weight_g_35_40",
-    "weight_g_40_45",
-    "weight_g_45_50",
-    "weight_g_50_55",
-    "weight_g_55_60",
-    "weight_g_60_65",
-    "weight_g_65_70",
-    "weight_g_70_75",
-    "weight_g_total",
-    "weight_g_0_35",
-    "weight_percent_0_35",
-    "weight_g_75_80",
-    "weight_percent_75_80",
-    "weight_percent_0_28",
-    "weight_percent_gte75",
-    "weight_percent_gte80",
-    "weight_percent_0_25",
-    "weight_percent_25_28",
-    "weight_percent_28_35",
-    "weight_percent_35_40",
-    "weight_percent_40_45",
-    "weight_percent_45_50",
-    "weight_percent_50_55",
-    "weight_percent_55_60",
-    "weight_percent_60_65",
-    "weight_percent_65_70",
-    "weight_percent_70_75",
-    "weight_percent_75_80",
-    "weight_g_gte75",
-    "weight_g_gte80",
-    "weight_g_75_80",
+    # "weight_g_0_28",
+    # "weight_g_0_25",
+    # "weight_g_25_28",
+    # "weight_g_28_35",
+    # "weight_g_35_40",
+    # "weight_g_40_45",
+    # "weight_g_45_50",
+    # "weight_g_50_55",
+    # "weight_g_55_60",
+    # "weight_g_60_65",
+    # "weight_g_65_70",
+    # "weight_g_70_75",
+    # "weight_g_total",
+    # "weight_g_0_35",
+    # "weight_percent_0_35",
+    # "weight_g_75_80",
+    # "weight_percent_75_80",
+    # "weight_percent_0_28",
+    # "weight_percent_gte75",
+    # "weight_percent_gte80",
+    # "weight_percent_0_25",
+    # "weight_percent_25_28",
+    # "weight_percent_28_35",
+    # "weight_percent_35_40",
+    # "weight_percent_40_45",
+    # "weight_percent_45_50",
+    # "weight_percent_50_55",
+    # "weight_percent_55_60",
+    # "weight_percent_60_65",
+    # "weight_percent_65_70",
+    # "weight_percent_70_75",
+    # "weight_percent_75_80",
+    # "weight_g_gte75",
+    # "weight_g_gte80",
+    # "weight_g_75_80",
     "weight_g_35_50_france",
     "weight_g_50_60_france",
     "weight_g_60_75_france",
-    "weight_g_lt28_45mm",
+    # "weight_g_lt28_45mm",
     "yearfact",
-    "yield_gte80_t_ha",
-    "yield_0_35_t_ha",
+    # "yield_gte80_t_ha",
+    # "yield_0_35_t_ha",
     "yield_35_50_t_ha_france",
     "yield_50_60_t_ha_france",
     "yield_60_75_t_ha_france",
     "yield_75_t_ha_france",
     "yield_0_35_t_ha_france",
     "yield_total_t_ha_france",
-    "yieldtha",
+    # "yieldtha",
     "yld_blight",
     "yld_green",
-    "yld_45",
-    "yld_85",
-    "y25_40",
-    "y45_65",
-    "y45_60",
-    "y65_85",
-    "y60_70",
-    "y65_75",
-    "y60_75",
-    "y35_50",
-    "y70_80",
-    "y75_85",
+    # "yld_45",
+    # "yld_85",
+    # "y25_40",
+    # "y45_65",
+    # "y45_60",
+    # "y65_85",
+    # "y60_70",
+    # "y65_75",
+    # "y60_75",
+    # "y35_50",
+    # "y70_80",
+    # "y75_85",
     "y25_40no",
     "y45_65no",
     "y80_85tha",
@@ -377,49 +378,9 @@ ALWAYS_DROP_COLS = [
 COLUMN_NAME_ALIASES: dict[str, str] = {}
 
 
-class Trial(BaseModel):
-    model_config = ConfigDict(extra="allow", str_strip_whitespace=True)
-
-    experiment_name: str = Field(min_length=1)
-    location: str = Field(min_length=1)
-    name1: str = Field(min_length=1)
-    plot: int = Field(gt=0)
-    year: int
-    o_a_score: float | None = Field(ge=0, le=9)
-    comments: str | None = Field()
-
-    @model_validator(mode="before")
-    @classmethod
-    def clean_all_nans(cls, data: dict) -> dict:
-        if not isinstance(data, dict):
-            return data
-
-        cleaned = {}
-
-        for key, val in data.items():
-            if val is None or pd.isna(val):
-                cleaned[key] = None
-            elif isinstance(val, str):
-                stripped = val.strip()
-                cleaned[key] = (
-                    None
-                    if stripped == "" or stripped in ("-9", "-9.0", "-9.00")
-                    else stripped
-                )
-            elif isinstance(val, bool):
-                cleaned[key] = val
-            elif isinstance(val, (int, float)) and val == -9:
-                cleaned[key] = None
-            elif isinstance(val, int) and key not in ["year", "plot"]:
-                cleaned[key] = float(val)
-            else:
-                cleaned[key] = val
-        return cleaned
-
-
 def _format_errors(exc: ValidationError) -> str:
     return " | ".join(
-        f'{".".join(str(x) for x in err["loc"])}: {err["msg"]} ({err.get("input")!r})'
+        f'{".".join(str(x) for x in err["loc"])}: {err["msg"]}, ({err.get("input")!r})'
         for err in exc.errors()
     )
 
@@ -447,30 +408,28 @@ def archive_loaded_sheet(archive_dir: Path, file: Path):
 
 @dlt.resource(name="raw_excel_rows", write_disposition="skip")
 def load_excel_source(file_path: str, sheet_name: str | int):
-    try:
-        file_name = Path(file_path).name
-        df = pd.read_excel(file_path, sheet_name=sheet_name)
-        std_result = standardise_columns(df, ALWAYS_DROP_COLS, COLUMN_NAME_ALIASES)
-        df = std_result.dataframe
+    file_name = Path(file_path).name
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    std_result = standardise_columns(df, ALWAYS_DROP_COLS, COLUMN_NAME_ALIASES)
+    df = std_result.dataframe
 
-        valids = []
-        rejects = []
+    valids = []
+    rejects = []
 
-        for idx, row in enumerate(df.to_dict(orient="records"), start=2):
-            row["source_file"] = file_name
-            row["source_row"] = idx
+    for idx, row in enumerate(df.to_dict(orient="records"), start=2):
+        row["source_file"] = file_name
+        row["source_row"] = idx
 
-            try:
-                validated_row = Trial(**row).model_dump()
-                valids.append(dict(validated_row))
-            except ValidationError as err:
-                reject_row = dict(row)
-                reject_row["error_message"] = _format_errors(err)
-                rejects.append(reject_row)
+        try:
+            validated_row = Trial(**row).model_dump()
+            valids.append(dict(validated_row))
+        except ValidationError as err:
+            reject_row = dict(row)
+            reject_row["error_message"] = _format_errors(err)
+            rejects.append(reject_row)
+            print(reject_row)
 
-        yield {"valids": valids, "rejects": rejects}
-    except Exception as e:
-        print(f"Sheet Error: {e}")
+    yield {"valids": valids, "rejects": rejects}
 
 
 @dlt.transformer(
@@ -538,16 +497,18 @@ def main():
                 ]
             )
 
-            load_failure = load_info.has_failed_jobs
-
             for package in load_info.load_packages:
                 if package.schema_update:
                     print(
                         f"SCHEMA UPDATED: {file.name} : {list(package.schema_update.keys())}"
                     )
 
+            load_failure = load_info.has_failed_jobs
+
             if not load_failure:
                 archive_loaded_sheet(archive_dir, file)
+            else:
+                print(f"LOAD FAILED: {file.name}. Leaving in incoming folder.")
 
         except Exception as pipeline_error:
             print(

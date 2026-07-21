@@ -1,0 +1,8 @@
+teagasc_trials:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../../data/trials.duckdb
+      threads: 4
+      schema: analytics
