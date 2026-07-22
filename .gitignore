@@ -8,6 +8,9 @@ __pycache__/
 data/**
 !data/**/
 !data/**/.gitkeep
+!data/**/*.dvc
+!data/**/*.json
+
 
 artifacts/**
 !artifacts/**/

@@ -1,0 +1,9 @@
+duckdb:
+  path: "data/trials.duckdb"
+
+relations:
+  oa_mart: "trials.analytics_gold.mart_overall_analysis"
+
+outputs:
+  oa_mart_parquet: "data/gold/o_a_mart.parquet"
+  oa_mart_meta: "data/gold/o_a_mart.meta.json"

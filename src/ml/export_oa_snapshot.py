@@ -13,6 +13,8 @@ from typing import Any
 
 import duckdb
 
+from .ml_config import load_ml_config
+
 
 @dataclass(frozen=True)
 class SnapshotMeta:
@@ -36,12 +38,15 @@ def _ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
+def _safe_scalar(con: duckdb.DuckDBPyConnection, sql: str) -> Any:
+    try:
+        return con.execute(sql).fetchone()[0]
+    except Exception:
+        return None
+
+
 def export_snapshot(
-    *,
-    duckdb_path: Path,
-    relation: str,
-    out_parquet: Path,
-    out_meta: Path | None,
+    *, duckdb_path: Path, relation: str, out_parquet: Path, out_meta: Path | None
 ) -> SnapshotMeta:
     duckdb_path = duckdb_path.expanduser().resolve()
     out_parquet = out_parquet.expanduser().resolve()
@@ -59,30 +64,24 @@ def export_snapshot(
     try:
         con.execute(f"SELECT 1 FROM {relation} LIMIT 1;")
 
-        con.execute(
-            f"""
-            COPY (
-                SELECT * FROM {relation}
-            )
-            TO '{str(out_parquet).replace("'", "''")}'
+        escaped = str(out_parquet).replace("'", "''")
+        con.execute(f"""
+            COPY (SELECT * FROM {relation})
+            TO '{escaped}'
             (FORMAT PARQUET, COMPRESSION ZSTD);
-            """
-        )
+            """)
 
         n_rows = con.execute(f"SELECT COUNT(*) FROM {relation};").fetchone()[0]
+        cols = [
+            r[0] for r in con.execute(f"DESCRIBE SELECT * FROM {relation};").fetchall()
+        ]
 
-        cols = [r[0] for r in con.execute(f"DESCRIBE SELECT * FROM {relation};").fetchall()]
-
-        def safe_scalar(sql: str) -> Any:
-            try:
-                return con.execute(sql).fetchone()[0]
-            except Exception:
-                return None
-
-        min_year = safe_scalar(f"SELECT MIN(year) FROM {relation};")
-        max_year = safe_scalar(f"SELECT MAX(year) FROM {relation};")
-        n_locations = safe_scalar(f"SELECT COUNT(DISTINCT location) FROM {relation};")
-        n_clones = safe_scalar(f"SELECT COUNT(DISTINCT name1) FROM {relation};")
+        min_year = _safe_scalar(con, f"SELECT MIN(year) FROM {relation};")
+        max_year = _safe_scalar(con, f"SELECT MAX(year) FROM {relation};")
+        n_locations = _safe_scalar(
+            con, f"SELECT COUNT(DISTINCT location) FROM {relation};"
+        )
+        n_clones = _safe_scalar(con, f"SELECT COUNT(DISTINCT name1) FROM {relation};")
 
         meta = SnapshotMeta(
             relation=relation,
@@ -107,18 +106,48 @@ def export_snapshot(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Export DVC snapshot for OA modelling dataset from DuckDB.")
-    p.add_argument("--duckdb-path", required=True, help="Path to DuckDB file (same one used by dlt/dbt).")
-    p.add_argument("--relation", default="gold.o_a_mart", help='DuckDB relation, e.g. "gold.o_a_mart".')
-    p.add_argument("--out-parquet", default="data/gold/o_a_mart.parquet", help="Output parquet path.")
-    p.add_argument("--out-meta", default="data/gold/o_a_mart.meta.json", help="Output metadata JSON path.")
+    p = argparse.ArgumentParser(
+        description="Export OA modelling dataset snapshot from DuckDB using config."
+    )
+    p.add_argument(
+        "--config", default="src/ml/config/ml.yaml", help="Path to ML config yaml."
+    )
+
+    p.add_argument("--duckdb-path", default=None, help="Override DuckDB path.")
+    p.add_argument(
+        "--relation", default=None, help="Override relation, e.g. gold.o_a_mart."
+    )
+    p.add_argument("--out-parquet", default=None, help="Override output parquet path.")
+    p.add_argument(
+        "--out-meta",
+        default=None,
+        help="Override output metadata JSON path ('' to disable).",
+    )
+
     args = p.parse_args()
 
+    cfg = load_ml_config(args.config)
+
+    duckdb_path = Path(args.duckdb_path) if args.duckdb_path else Path(cfg.duckdb.path)
+    relation = args.relation if args.relation else cfg.relations.oa_mart
+    out_parquet = (
+        Path(args.out_parquet)
+        if args.out_parquet
+        else Path(cfg.outputs.oa_mart_parquet)
+    )
+
+    if args.out_meta == "":
+        out_meta = None
+    else:
+        out_meta = (
+            Path(args.out_meta) if args.out_meta else Path(cfg.outputs.oa_mart_meta)
+        )
+
     meta = export_snapshot(
-        duckdb_path=Path(args.duckdb_path),
-        relation=args.relation,
-        out_parquet=Path(args.out_parquet),
-        out_meta=Path(args.out_meta) if args.out_meta else None,
+        duckdb_path=duckdb_path,
+        relation=relation,
+        out_parquet=out_parquet,
+        out_meta=out_meta,
     )
 
     print("Snapshot export complete:")
