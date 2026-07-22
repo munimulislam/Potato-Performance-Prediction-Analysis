@@ -17,7 +17,8 @@ dependencies = [
     "marimo",
     "pyarrow",
     "ibis-framework",
-    "dbt-duckdb==1.10.1"
+    "dbt-duckdb==1.10.1",
+    "dvc==3.67.1"
 ]
 
 [project.optional-dependencies]

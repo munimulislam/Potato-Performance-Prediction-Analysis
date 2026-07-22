@@ -1,10 +1,14 @@
 {{ config(materialized='table', schema='gold') }}
 
-select
+SELECT
     name1,
     year,
+    location,
+    experiment_name,
+    plot,
     env_type,
-    case when env_type = 'NE' then 1 else 0 end as env_enc,
+    trial_type,
+    soil_type,
     o_a_score,
     tubersize,
     eveness,
@@ -17,5 +21,6 @@ select
     ffdefects,
     ffhollowh,
     ff_irs
-from {{ ref('int_trials_current') }}
-where o_a_score is not null
+FROM {{ ref('int_trials_current') }}
+WHERE o_a_score IS NOT NULL
+AND env_type IN ('MED', 'NE')

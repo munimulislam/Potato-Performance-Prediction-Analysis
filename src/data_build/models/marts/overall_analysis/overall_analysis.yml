@@ -1,9 +1,8 @@
-versions: 2
+version: 2
 
-models: 
-  - name: int_trials_current
-    description: "Current snapshot of valid trials (SCD2 valid_to is NULL)."
-    
+models:
+  - name: mart_overall_analysis
+    description: "Overall Analysis Modelling table."
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -12,31 +11,34 @@ models:
             - experiment_name
             - name1
             - plot
-
     columns:
-      - name: year
-        data_tests: [not_null]
-
       - name: name1
-        data_tests: [not_null]
+        tests: [not_null]
+
+      - name: location
+        tests: [not_null] 
 
       - name: experiment_name
         tests: [not_null]
 
-      - name: plot 
+      - name: plot
+        tests: [not_null]  
+
+      - name: year
         tests: [not_null]
 
-      - name: location 
-        tests: [not_null]
-
-      - name: business_key 
-        tests: [not_null]
+      - name: o_a_score
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
 
       - name: env_type
         tests:
           - not_null
           - accepted_values:
-              values: ["MED", "NE", "UNKNOWN"]
+              values: ["MED", "NE"]
 
       - name: trial_type
         tests:
@@ -48,4 +50,4 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ["SAND", "CLAY", "UNKNOWN"]
+              values: ["CLAY", "SAND", "UNKNOWN"]

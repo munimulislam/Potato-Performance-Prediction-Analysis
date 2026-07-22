@@ -6,36 +6,40 @@ models:
     columns:
       - name: year
         data_tests: [not_null]
+
       - name: name1
         data_tests: [not_null]
+
       - name: experiment_name
         tests: [not_null]
+
       - name: plot 
         tests: [not_null]
+
       - name: location 
         tests: [not_null]
+
       - name: business_key 
         tests: [not_null]
+
       - name: source_file_name
         tests: [not_null]
+
       - name: source_row_number
         tests: [not_null]
+      
       
   - name: stg_quarantine
     description: "Staging view of trial_data.quarantine with consistent casts & rename"
     columns:
       - name: error_message
         tests: [not_null]
+
       - name: source_file_name
         tests: [not_null]
+
       - name: source_row_number
         tests: [not_null]
+
       - name: business_key 
         tests: [not_null]
-      # - name: env_type
-      #   data_tests:
-      #     - not_null
-      #     - accepted_values: {values: ['NE', 'MED']}
-      # - name: o_a_score
-      #   data_tests:
-      #     - dbt_utils.accepted_range: {min_value: 0, max_value: 9}

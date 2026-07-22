@@ -26,3 +26,7 @@ logs/*
 # DuckDB temporary processing files
 *.tmp
 *.block
+
+.dvc/cache/
+.dvc/tmp/
+
