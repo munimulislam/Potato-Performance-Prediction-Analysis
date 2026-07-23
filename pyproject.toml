@@ -2,7 +2,7 @@
 name = "teagasc-potato-trails-data-pipeline"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11, <3.12"
 dependencies = [
     "pandas>=2.0",
     "numpy>=1.26",
@@ -18,7 +18,12 @@ dependencies = [
     "pyarrow",
     "ibis-framework",
     "dbt-duckdb==1.10.1",
-    "dvc==3.67.1"
+    "dvc==3.67.1",
+    "scikit-learn==1.9.0",
+    "mlflow==3.14.0",
+    "optuna==4.9.0",
+    "xgboost==3.2.0",
+    "lightgbm==4.7.0"
 ]
 
 [project.optional-dependencies]
