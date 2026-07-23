@@ -10,6 +10,7 @@ from typing import Any
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVR
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,7 @@ class ModelSpec:
     name: str
     estimator: Any
     params: dict
+    scale_numeric: bool
 
 
 def make_model(model_name: str, *, random_state: int) -> ModelSpec:
@@ -24,7 +26,9 @@ def make_model(model_name: str, *, random_state: int) -> ModelSpec:
 
     if m == "ridge":
         est = Ridge(alpha=1.0)
-        return ModelSpec(name="ridge", estimator=est, params={"alpha": 1.0})
+        return ModelSpec(
+            name="ridge", estimator=est, params={"alpha": 1.0}, scale_numeric=True
+        )
 
     if m == "rf":
         est = RandomForestRegressor(
@@ -37,6 +41,7 @@ def make_model(model_name: str, *, random_state: int) -> ModelSpec:
             name="rf",
             estimator=est,
             params={"n_estimators": 500, "min_samples_leaf": 2},
+            scale_numeric=False,
         )
 
     if m == "knn":
@@ -45,6 +50,16 @@ def make_model(model_name: str, *, random_state: int) -> ModelSpec:
             name="knn",
             estimator=est,
             params={"n_neighbors": 15, "weights": "distance"},
+            scale_numeric=False,
+        )
+
+    if m == "svr":
+        est = SVR(C=10.0, epsilon=0.1, kernel="rbf", gamma="scale")
+        return ModelSpec(
+            name="svr",
+            estimator=est,
+            params={"C": 10.0, "epsilon": 0.1, "kernel": "rbf"},
+            scale_numeric=True,
         )
 
     if m == "xgb":
@@ -70,6 +85,7 @@ def make_model(model_name: str, *, random_state: int) -> ModelSpec:
                 "subsample": 0.9,
                 "colsample_bytree": 0.9,
             },
+            scale_numeric=False,
         )
 
     if m == "lgbm":
@@ -94,8 +110,9 @@ def make_model(model_name: str, *, random_state: int) -> ModelSpec:
                 "subsample": 0.9,
                 "colsample_bytree": 0.9,
             },
+            scale_numeric=False,
         )
 
     raise ValueError(
-        f"Unknown model_name: {model_name}. Expected one of ridge, rf, knn, xgb, lgbm"
+        f"Unknown model_name: {model_name}. Expected one of ridge, rf, knn, svr, xgb, lgbm"
     )

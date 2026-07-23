@@ -9,7 +9,7 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
-from .ml_config import MlConfig
+from .config import MlConfig
 
 
 def load_oa_dataframe(cfg: MlConfig) -> pd.DataFrame:

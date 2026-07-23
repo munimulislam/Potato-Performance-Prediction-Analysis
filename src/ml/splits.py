@@ -29,5 +29,6 @@ def group_kfold_splits(
     gkf = GroupKFold(n_splits=n_splits)
 
     X_dummy = np.zeros((len(df), 1), dtype=np.int8)
+
     for fold, (train_idx, test_idx) in enumerate(gkf.split(X_dummy, groups=groups)):
         yield Split(fold=fold, train_idx=train_idx, test_idx=test_idx)

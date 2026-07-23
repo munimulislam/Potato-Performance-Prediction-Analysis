@@ -37,14 +37,18 @@ class Trial(BaseModel):
                 cleaned[key] = None
             elif isinstance(val, str):
                 stripped = val.strip()
-                cleaned[key] = (
-                    None
-                    if stripped == "" or stripped in ("-9", "-9.0", "-9.00")
-                    else stripped
-                )
+                if stripped == "":
+                    cleaned[key] = None
+                else:
+                    try:
+                        num = float(stripped)
+                    except ValueError:
+                        cleaned[key] = stripped
+                    else:
+                        cleaned[key] = None if num < 0 else stripped
             elif isinstance(val, bool):
                 cleaned[key] = val
-            elif isinstance(val, (int, float)) and val == -9:
+            elif isinstance(val, (int, float)) and val < 0:
                 cleaned[key] = None
             elif isinstance(val, int) and key not in ["year", "plot"]:
                 cleaned[key] = float(val)

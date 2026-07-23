@@ -9,8 +9,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
+from sklearn.impute import MissingIndicator, SimpleImputer
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
@@ -46,15 +46,37 @@ def usable_numeric_columns(
     return [c for c in numeric_cols if not train_df_kept[c].isna().all()]
 
 
-def build_preprocessor(
-    *, numeric_cols: list[str], categorical_cols: list[str]
-) -> ColumnTransformer:
-    numeric_pipe = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
-            ("scaler", StandardScaler()),
+def build_numeric_pipeline(
+    scale_numeric: bool, use_missing_indicator: bool
+) -> Pipeline:
+    value_steps = [("imputer", SimpleImputer(strategy="median"))]
+    if scale_numeric:
+        value_steps.append(("scaler", StandardScaler()))
+
+    values_pipe = Pipeline(steps=value_steps)
+
+    if not use_missing_indicator:
+        return values_pipe
+
+    flags = MissingIndicator(features="all", sparse=False)
+    union = FeatureUnion(
+        [
+            ("values", values_pipe),
+            ("flags", flags),
         ]
     )
+    return Pipeline([("union", union)])
+
+
+def build_preprocessor(
+    *,
+    numeric_cols: list[str],
+    categorical_cols: list[str],
+    scale_numeric: bool,
+    use_missing_indicator: bool,
+) -> ColumnTransformer:
+
+    numeric_pipe = build_numeric_pipeline(scale_numeric, use_missing_indicator)
 
     categorical_pipe = Pipeline(
         steps=[

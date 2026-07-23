@@ -13,7 +13,7 @@ from typing import Any
 
 import duckdb
 
-from .ml_config import load_ml_config
+from .config import load_ml_config
 
 
 @dataclass(frozen=True)

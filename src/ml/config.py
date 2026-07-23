@@ -1,5 +1,5 @@
 """
-@File - ml_config.py
+@File - config.py
 @Author - MdMunimul.Islam@teagasc.ie
 @Created - 22/07/2026
 """
@@ -27,6 +27,12 @@ def _require_list_num(x: Any, name: str) -> list[float]:
     if not isinstance(x, list) or not all(isinstance(v, (int, float)) for v in x):
         raise ValueError(f"Expected '{name}' to be a list of numbers")
     return [float(v) for v in x]
+
+
+def _require_list_bool(x: Any, name: str) -> list[bool]:
+    if not isinstance(x, list) or not all(isinstance(v, bool) for v in x):
+        raise ValueError(f"Expected {name} to be a list[bool]")
+    return x
 
 
 @dataclass(frozen=True)
@@ -65,6 +71,7 @@ class ExperimentCfg:
     name: str
     cv: CvCfg
     thresholds: list[float]
+    use_missing_indicator: list[bool]
     models: list[str]
     random_state: int
 
@@ -85,8 +92,8 @@ class MlConfig:
     mlflow: MlflowCfg
 
 
-def load_ml_config(config_path: str = "config/ml.yaml") -> MlConfig:
-    path = Path(config_path)
+def load_ml_config(config_path: str) -> MlConfig:
+    path = Path(f"src/ml/config/{config_path}")
     root = yaml.safe_load(path.read_text(encoding="utf-8"))
     root = _require_dict(root, "root")
 
@@ -126,6 +133,10 @@ def load_ml_config(config_path: str = "config/ml.yaml") -> MlConfig:
                     [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
                 ),
                 "experiment.thresholds",
+            ),
+            use_missing_indicator=_require_list_bool(
+                experiment.get("use_missing_indicator"),
+                "experiment.use_missing_indicator",
             ),
             models=_require_list_str(
                 experiment.get("models", ["ridge", "rf"]), "experiment.models"
