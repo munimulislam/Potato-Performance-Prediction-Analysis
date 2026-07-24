@@ -33,3 +33,6 @@ logs/*
 .dvc/cache/
 .dvc/tmp/
 
+.RData
+.Rhistory
+
