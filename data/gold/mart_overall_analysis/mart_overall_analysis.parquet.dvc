@@ -1,0 +1,5 @@
+outs:
+- md5: 7878765eb62a8f01078f1135645ba60d
+  size: 257986
+  hash: md5
+  path: mart_overall_analysis.parquet

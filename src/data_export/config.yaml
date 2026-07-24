@@ -1,0 +1,8 @@
+db_path: "data/trials.duckdb"
+schema: "trials.analytics_gold"
+
+tables:
+  oa_mart: "mart_overall_analysis"
+
+out_folder: "data/gold"
+
