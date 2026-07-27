@@ -20,15 +20,21 @@ class Split:
 
 
 def group_kfold_splits(
-    df: pd.DataFrame, *, group_col: str, n_splits: int
+    df: pd.DataFrame, *, target_col: str, group_col: str, n_splits: int
 ) -> Iterator[Split]:
     if group_col not in df.columns:
         raise ValueError(f"group_col not present: {group_col}")
 
-    groups = df[group_col].astype(str).to_numpy()
+    groups = df[group_col].astype(str)
+    n_groups = groups.nunique(dropna=False)
+    if n_groups < n_splits:
+        raise ValueError(
+            f"group-col {group_col} has {n_groups} groups but n_splits={n_splits}"
+        )
+
     gkf = GroupKFold(n_splits=n_splits)
-
     X_dummy = np.zeros((len(df), 1), dtype=np.int8)
+    y = df[target_col]
 
-    for fold, (train_idx, test_idx) in enumerate(gkf.split(X_dummy, groups=groups)):
+    for fold, (train_idx, test_idx) in enumerate(gkf.split(X_dummy, y, groups=groups)):
         yield Split(fold=fold, train_idx=train_idx, test_idx=test_idx)

@@ -1,0 +1,31 @@
+dataset:
+  path: "data/gold/mart_overall_analysis/mart_overall_analysis.parquet"
+  format: "parquet"
+
+  features:
+    target: "o_a_score"
+
+    keys:
+      - "name1"
+      - "year"
+      - "location"
+      - "experiment_name"
+      - "plot"
+
+    categorical:
+      - "env_type"
+      - "trial_type"
+      - "soil_type"
+
+    numeric:
+      - "tubersize"
+      - "eveness"
+      - "appearance"
+      - "tubnumbers"
+      - "eyedepth"
+      - "yield"
+      - "uniformity"
+      - "ffscab"
+      - "ffdefects"
+      - "ffhollowh"
+      - "ff_irs"
