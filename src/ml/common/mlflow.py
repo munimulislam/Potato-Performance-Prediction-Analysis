@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import mlflow
 import pandas as pd
+import joblib
 
 
 def init_mlflow(tracking_uri: Optional[str], experiment_name: str) -> None:
@@ -30,4 +31,11 @@ def log_dict_artifact(obj: Dict[str, Any], filename: str) -> None:
         path = f"{td}/{filename}"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(obj, f, indent=2)
+        mlflow.log_artifact(path)
+
+
+def log_joblib_artifact(obj, filename: str) -> None:
+    with tempfile.TemporaryDirectory() as td:
+        path = f"{td}/{filename}"
+        joblib.dump(obj, path)
         mlflow.log_artifact(path)
