@@ -15,13 +15,12 @@ SELECT
     appearance,
     tubnumbers,
     eyedepth,
-    finalyield,
     uniformity,
     ffscab,
     ffdefects,
     ffhollowh,
     ff_irs,
-    COALESCE(finalyield, yield_total_t_ha) yield
+    yield
 FROM {{ ref('int_trials_current') }}
 WHERE o_a_score IS NOT NULL
 AND env_type IN ('MED', 'NE')

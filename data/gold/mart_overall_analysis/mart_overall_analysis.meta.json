@@ -1,9 +1,9 @@
 {
   "relation": "trials.analytics_gold.mart_overall_analysis",
   "duckdb_path": "C:\\Users\\mishy\\Documents\\Dev\\Teagasc\\potato performance prediction\\data\\trials.duckdb",
-  "exported_at_utc": "2026-07-24T20:51:37.028658+00:00",
+  "exported_at_utc": "2026-08-12T03:06:30.915042+00:00",
   "parquet_path": "C:\\Users\\mishy\\Documents\\Dev\\Teagasc\\potato performance prediction\\data\\gold\\mart_overall_analysis\\mart_overall_analysis.parquet",
-  "n_rows": 29281,
+  "n_rows": 29271,
   "columns": [
     "name1",
     "year",
@@ -19,7 +19,6 @@
     "appearance",
     "tubnumbers",
     "eyedepth",
-    "finalyield",
     "uniformity",
     "ffscab",
     "ffdefects",

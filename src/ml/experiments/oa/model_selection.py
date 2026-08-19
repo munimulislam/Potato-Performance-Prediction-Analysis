@@ -24,13 +24,13 @@ from ml.common.metrics import compute_metrics, mean_std_se
 DATASET_YAML_PATH = Path(__file__).resolve().parent / "config" / "dataset.yaml"
 
 TRACKING_URI = "sqlite:///mlflow.db"
-MLFLOW_EXPERIMENT_NAME = f"oa/exp2_model_selection_{datetime.now()}"
-PARENT_RUN_NAME = "exp2_model_selection"
+MLFLOW_EXPERIMENT_NAME = f"oa/model_selection"
+PARENT_RUN_NAME = "model_selection"
 
 GROUP_COL = "name1"
 N_SPLITS = 5
 ENV_COL = "env_type"
-THRESHOLD = 0.5
+THRESHOLD = 1.0
 MEDIUM_MAX_MISSING_FRAC = 0.5
 RANDOM_STATE = 42
 LOG_FOLD_PREDICTIONS = True
@@ -173,12 +173,11 @@ def _spearman_variety_level(
     if n_var < 2:
         return float("nan"), n_var
 
-    # pandas Spearman
     rho = agg["y_true"].corr(agg["y_pred"], method="spearman")
     return float(rho), n_var
 
 
-def run_exp2_best_model_cv1(
+def run_model_selection_cv1(
     *,
     df: pd.DataFrame,
     dataset_path: str,
@@ -187,7 +186,6 @@ def run_exp2_best_model_cv1(
     numeric_cols: List[str],
     categorical_cols: List[str],
 ) -> pd.DataFrame:
-    # Required columns
     for c in (target_col, GROUP_COL, ENV_COL):
         if c not in df.columns:
             raise ValueError(f"Required column missing from dataset: '{c}'")
@@ -233,7 +231,7 @@ def run_exp2_best_model_cv1(
 
     with mlflow.start_run(run_name=PARENT_RUN_NAME):
         mlflow.set_tags(
-            {"phase": "exp2", "cv": "cv1_groupkfold", "group_col": GROUP_COL}
+            {"phase": "model_selection", "cv": "cv1_groupkfold", "group_col": GROUP_COL}
         )
         mlflow.log_params(
             {
@@ -472,9 +470,6 @@ def run_exp2_best_model_cv1(
                     "test_scored_n_mean": float(
                         fold_metrics_df["test_scored_n"].mean(skipna=True)
                     ),
-                    "n_varieties_all_mean": _mean("n_varieties_all"),
-                    "n_varieties_ne_mean": _mean("n_varieties_ne"),
-                    "n_varieties_med_mean": _mean("n_varieties_med"),
                     "rmse_complete_mean": _mean("rmse_complete"),
                     "rmse_medium_mean": _mean("rmse_medium"),
                     "rmse_incomplete_mean": _mean("rmse_incomplete"),
@@ -490,7 +485,7 @@ def run_exp2_best_model_cv1(
                     "mae_complete_mean": _mean("mae_complete"),
                     "mae_medium_mean": _mean("mae_medium"),
                     "mae_incomplete_mean": _mean("mae_incomplete"),
-                    "mae_ne_mean": _mean("mae_ne"),
+                    "mae_all_mean": _mean("mae_all"),
                     "pearson_r_med_mean": _mean("pearson_r_med"),
                     "pearson_r_complete_mean": _mean("pearson_r_complete"),
                     "pearson_r_medium_mean": _mean("pearson_r_medium"),
@@ -505,7 +500,9 @@ def run_exp2_best_model_cv1(
                     }
                 )
 
-                log_df_artifact(fold_metrics_df, f"exp2_fold_metrics__{model_name}.csv")
+                log_df_artifact(
+                    fold_metrics_df, f"model_selection_fold_metrics__{model_name}.csv"
+                )
 
                 if LOG_FOLD_PREDICTIONS:
                     fold_pred_df = (
@@ -515,7 +512,8 @@ def run_exp2_best_model_cv1(
                     )
                     if not fold_pred_df.empty:
                         log_df_artifact(
-                            fold_pred_df, f"exp2_fold_predictions__{model_name}.csv"
+                            fold_pred_df,
+                            f"model_selection_fold_predictions__{model_name}.csv",
                         )
 
                 model_summary_rows.append(model_summary)
@@ -524,7 +522,7 @@ def run_exp2_best_model_cv1(
             ["rmse_all_mean", "spearman_variety_all_mean"],
             ascending=[True, False],
         )
-        log_df_artifact(model_summary_df, "exp2_model_summary.csv")
+        log_df_artifact(model_summary_df, "model_selection_summary.csv")
 
         best_row = model_summary_df.iloc[0].to_dict()
         log_dict_artifact(
@@ -562,7 +560,7 @@ def run_exp2_best_model_cv1(
                     "pearson_r_incomplete_mean": best_row["pearson_r_incomplete_mean"],
                 },
             },
-            "exp2_selected_model.json",
+            "selected_model.json",
         )
 
     return model_summary_df
@@ -586,7 +584,7 @@ def main() -> int:
     init_mlflow(TRACKING_URI, MLFLOW_EXPERIMENT_NAME)
     df = load_dataframe(dataset_path)
 
-    model_summary_df = run_exp2_best_model_cv1(
+    model_summary_df = run_model_selection_cv1(
         df=df,
         dataset_path=dataset_path,
         target_col=target_col,
@@ -595,7 +593,7 @@ def main() -> int:
         categorical_cols=categorical_cols,
     )
 
-    print("Exp 2 complete.")
+    print("Model Selection Experiment complete.")
     print("\nTop 10 models by (rmse_all_mean asc, spearman_variety_all_mean desc):")
     print(model_summary_df.head(10).to_string(index=False))
     return 0

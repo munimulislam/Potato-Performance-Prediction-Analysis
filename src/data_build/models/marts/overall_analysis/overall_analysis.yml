@@ -12,42 +12,12 @@ models:
             - name1
             - plot
     columns:
-      - name: name1
-        tests: [not_null]
-
-      - name: location
-        tests: [not_null] 
-
-      - name: experiment_name
-        tests: [not_null]
-
-      - name: plot
-        tests: [not_null]  
-
-      - name: year
-        tests: [not_null]
-
       - name: o_a_score
         tests:
           - not_null
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 9
 
       - name: env_type
         tests:
           - not_null
           - accepted_values:
               values: ["MED", "NE"]
-
-      - name: trial_type
-        tests:
-          - not_null
-          - accepted_values:
-              values: ["PROCESS", "WARE", "UNKNOWN"]
-
-      - name: soil_type
-        tests:
-          - not_null
-          - accepted_values:
-              values: ["CLAY", "SAND", "UNKNOWN"]

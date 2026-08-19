@@ -4,27 +4,27 @@
 @Created - 25/07/2026
 """
 
-from typing import List
-
 import numpy as np
+
+from typing import List
 from scipy import sparse
 from dataclasses import dataclass
 from typing import Literal
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer, MissingIndicator
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer, MissingIndicator
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
 
 ProfileName = Literal["linear", "tree", "booster"]
+
+RANDOM_STATE = 42
 
 
 @dataclass(frozen=True)
 class ProfileSpec:
     numeric_impute: Literal["none", "median"]
     numeric_scale: Literal["none", "standard"]
-    cat_onehot_sparse: bool
-    output_dense: bool
-    missing_indicator: bool
 
 
 def get_profile_spec(profile: str) -> ProfileSpec:
@@ -32,26 +32,17 @@ def get_profile_spec(profile: str) -> ProfileSpec:
     if p == "booster":
         return ProfileSpec(
             numeric_impute="none",
-            numeric_scale="none",
-            cat_onehot_sparse=True,
-            output_dense=False,
-            missing_indicator=False,
+            numeric_scale="standard",
         )
     if p == "tree":
         return ProfileSpec(
             numeric_impute="median",
-            numeric_scale="none",
-            cat_onehot_sparse=False,
-            output_dense=True,
-            missing_indicator=True,
+            numeric_scale="standard",
         )
     if p == "linear":
         return ProfileSpec(
             numeric_impute="median",
             numeric_scale="standard",
-            cat_onehot_sparse=False,
-            output_dense=True,
-            missing_indicator=True,
         )
     raise ValueError(f"Unknown profile: {profile}")
 
@@ -64,6 +55,14 @@ def _to_dense(X):
     if sparse.issparse(X):
         return X.toarray()
     return X
+
+
+def _identity(x):
+    return x
+
+
+def _to_float32(X):
+    return X.astype(np.float32)
 
 
 def make_preprocessor(
@@ -81,11 +80,22 @@ def make_preprocessor(
         num_steps.append(
             (
                 "identity",
-                FunctionTransformer(lambda X: X, feature_names_out="one-to-one"),
+                FunctionTransformer(_identity, feature_names_out="one-to-one"),
             )
         )
     elif spec.numeric_impute == "median":
         num_steps.append(("impute", SimpleImputer(strategy="median")))
+    elif spec.numeric_impute == "mean":
+        num_steps.append(("impute", SimpleImputer(strategy="mean")))
+    elif spec.numeric_impute == "knn":
+        num_steps.append(("impute", KNNImputer(n_neighbors=15)))
+    elif spec.numeric_impute == "iterative":
+        num_steps.append(
+            (
+                "impute",
+                IterativeImputer(max_iter=10, random_state=RANDOM_STATE),
+            )
+        )
     else:
         raise ValueError(spec.numeric_impute)
 
@@ -98,7 +108,7 @@ def make_preprocessor(
 
     transformers.append(("num_values", Pipeline(steps=num_steps), numeric_cols))
 
-    if spec.missing_indicator:
+    if spec.numeric_impute != "none":
         transformers.append(
             (
                 "num_miss",
@@ -120,9 +130,7 @@ def make_preprocessor(
                 ),
                 (
                     "onehot",
-                    _make_onehot(
-                        handle_unknown="ignore", sparse_out=spec.cat_onehot_sparse
-                    ),
+                    _make_onehot(handle_unknown="ignore", sparse_out=True),
                 ),
             ]
         )
@@ -136,7 +144,5 @@ def make_preprocessor(
     )
 
     steps = [("columns", coltf)]
-    if spec.output_dense:
-        steps.append(("densify", FunctionTransformer(_to_dense)))
 
     return Pipeline(steps=steps)

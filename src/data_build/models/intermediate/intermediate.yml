@@ -49,3 +49,75 @@ models:
           - not_null
           - accepted_values:
               values: ["SAND", "CLAY", "UNKNOWN"]
+      
+      - name: o_a_score
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: appearance
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+      
+      - name: tubersize
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+      
+      - name: eveness
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: tubnumbers
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: eyedepth
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: uniformity
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: ffscab
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: ffdefects
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+      
+      - name: ffhollowh
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: ff_irs
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+
+      - name: yield
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 250

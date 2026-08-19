@@ -1,5 +1,5 @@
 """
-@File - imputation_threshold.py
+@File - missing_threshold.py
 @Author - MdMunimul.Islam@teagasc.ie
 @Created - 26/07/2026
 """
@@ -12,7 +12,6 @@ import pandas as pd
 import yaml
 import mlflow
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import mean_squared_error
 
 from ml.common.data import load_dataframe
 from ml.common.mlflow import init_mlflow, log_df_artifact, log_dict_artifact
@@ -24,8 +23,8 @@ from ml.common.metrics import compute_metrics, mean_std_se
 DATASET_YAML_PATH = Path(__file__).resolve().parent / "config" / "dataset.yaml"
 
 TRACKING_URI = "sqlite:///mlflow.db"
-MLFLOW_EXPERIMENT_NAME = "oa/exp1_missingness_threshold_cv1"
-PARENT_RUN_NAME = "exp1_missingness_threshold_cv1"
+MLFLOW_EXPERIMENT_NAME = "oa/missingness_threshold"
+PARENT_RUN_NAME = "missingness_threshold_cv1"
 
 GROUP_COL = "name1"
 N_SPLITS = 5
@@ -147,7 +146,7 @@ def _metrics_for_mask(
     }
 
 
-def run_exp1(
+def run_imputation_threshold_test(
     *,
     df: pd.DataFrame,
     dataset_path: str,
@@ -200,7 +199,7 @@ def run_exp1(
     with mlflow.start_run(run_name=PARENT_RUN_NAME):
         mlflow.set_tags(
             {
-                "phase": "exp1",
+                "phase": "missing_threshold",
                 "cv": "cv1_groupkfold",
                 "group_col": GROUP_COL,
             }
@@ -375,8 +374,16 @@ def run_exp1(
 
                     fold_metrics_df = pd.DataFrame(fold_rows)
 
-                    rmse_all_mean, rmse_all_std, rmse_all_se, n_valid = mean_std_se(
+                    mae_all_mean, mae_all_std, mae_all_se, _ = mean_std_se(
+                        fold_metrics_df["mae_all"]
+                    )
+
+                    rmse_all_mean, rmse_all_std, rmse_all_se, _ = mean_std_se(
                         fold_metrics_df["rmse_all"]
+                    )
+
+                    r2_all_mean, r2_all_std, r2_all_se, _ = mean_std_se(
+                        fold_metrics_df["r2_all"]
                     )
 
                     def _mean(col: str) -> float:
@@ -386,13 +393,8 @@ def run_exp1(
                         "rmse_all_mean": float(rmse_all_mean),
                         "rmse_all_std": float(rmse_all_std),
                         "rmse_all_se": float(rmse_all_se),
-                        "rmse_all_n_folds_valid": float(n_valid),
-                        "train_kept_frac_mean": float(
-                            fold_metrics_df["train_kept_frac"].mean(skipna=True)
-                        ),
-                        "test_scored_n_mean": float(
-                            fold_metrics_df["test_scored_n"].mean(skipna=True)
-                        ),
+                        "mae_all_mean": float(mae_all_mean),
+                        "r2_all_mean": float(r2_all_mean),
                         "rmse_ne_mean": _mean("rmse_ne"),
                         "rmse_med_mean": _mean("rmse_med"),
                         "mae_ne_mean": _mean("mae_ne"),
@@ -403,11 +405,6 @@ def run_exp1(
                         "mae_complete_mean": _mean("mae_complete"),
                         "mae_medium_mean": _mean("mae_medium"),
                         "mae_incomplete_mean": _mean("mae_incomplete"),
-                        "n_ne_mean": _mean("n_ne"),
-                        "n_med_mean": _mean("n_med"),
-                        "n_complete_mean": _mean("n_complete"),
-                        "n_medium_mean": _mean("n_medium"),
-                        "n_incomplete_mean": _mean("n_incomplete"),
                     }
 
                     mlflow.log_metrics(summary)
@@ -442,7 +439,7 @@ def run_exp1(
             ["model", "threshold"]
         )
 
-        log_df_artifact(model_threshold_summary, "exp1_model_threshold_summary.csv")
+        log_df_artifact(model_threshold_summary, "missing_threshold_summary.csv")
 
         thr_rows: List[Dict[str, Any]] = []
 
@@ -462,14 +459,11 @@ def run_exp1(
                     "rmse_all_mean_avg_models": avg_rmse,
                     "rmse_all_mean_best_model": best_rmse,
                     "best_model_at_threshold": best_model,
-                    "avg_train_kept_frac_mean": float(
-                        sub["train_kept_frac_mean"].mean(skipna=True)
-                    ),
                 }
             )
 
         threshold_summary = pd.DataFrame(thr_rows).sort_values("threshold")
-        log_df_artifact(threshold_summary, "exp1_threshold_summary.csv")
+        log_df_artifact(threshold_summary, "missing_threshold_summary.csv")
 
         if THRESHOLD_SELECTION_STRATEGY == "avg_models_rmse":
             score_col = "rmse_all_mean_avg_models"
@@ -495,7 +489,7 @@ def run_exp1(
                 "best_score": best_score,
                 "selected_threshold": selected_threshold,
             },
-            "exp1_selected_threshold.json",
+            "selected_threshold.json",
         )
 
     return {
@@ -523,7 +517,7 @@ def main() -> int:
 
     df = load_dataframe(dataset_path)
 
-    res = run_exp1(
+    res = run_imputation_threshold_test(
         df=df,
         dataset_path=dataset_path,
         target_col=target_col,
@@ -532,7 +526,7 @@ def main() -> int:
         categorical_cols=categorical_cols,
     )
 
-    print("Exp 1 complete.")
+    print("Experiment complete.")
     print(
         f"Selected threshold ({THRESHOLD_SELECTION_STRATEGY}): {res['selected_threshold']}"
     )

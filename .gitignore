@@ -38,4 +38,6 @@ logs/*
 
 mlruns
 build
+model
+reports
 
